@@ -12,25 +12,26 @@ var React = require('react-native');
  */
 var REQUEST_URL = 'https://raw.githubusercontent.com/facebook/react-native/master/docs/MoviesExample.json';
 
-var MOCKED_MOVIES_DATA = [
-  {title: 'Title', year: '2015', posters: {thumbnail: 'http://i.imgur.com/UePbdph.jpg'}},
-];
-
 var {
   AppRegistry,
   Image,
+  ListView,
   StyleSheet,
   Text,
-  View,
+  View
 } = React;
 
 var movieFilmz = React.createClass({
 
   getInitialState: function() {
     return {
-      movies: null,
+      dataSource: new ListView.DataSource({
+        rowHasChanged: (row1, row2) => row1 !== row2,
+      }),
+      loaded: false,
     };
   },
+
   componentDidMount: function() {
     this.fetchData();
   },
@@ -39,30 +40,40 @@ var movieFilmz = React.createClass({
       .then((response) => response.json())
       .then((responseData) => {
         this.setState({
-          movies: responseData.movies,
+          dataSource: this.state.dataSource.cloneWithRows(responseData.movies),
+          loaded: true,
         });
       })
       .done();
   },
 
-  renderLoadingView: function() {
-    return (
-      <View style={styles.container}>
-        <Text>
-          Loading movies...
-        </Text>
-      </View>
-    );
-  },
-
   render: function() {
 
-    if (!this.state.movies) {
+    if (!this.state.loaded) {
       return this.renderLoadingView();
     }
 
-    var movie = this.state.movies[0];
-     return this.renderMovie(movie);
+    return this.renderListView();
+  },
+
+   renderLoadingView: function() {
+     return (
+       <View style={styles.container}>
+         <Text>
+           Loading movies...
+         </Text>
+       </View>
+     );
+   },
+
+   renderListView:function(){
+     return (
+       <ListView
+         dataSource={this.state.dataSource}
+         renderRow={this.renderMovie}
+         style={styles.listView}
+       />
+      );
    },
 
    renderMovie: function(movie) {
